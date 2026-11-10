@@ -210,6 +210,9 @@ ebook-pipeline/
   作答存 localStorage（`feynman_notes:<id>`），「保存练习」统一落盘，「导出 JSON」下载整篇文件；
   关闭页面前有未保存修改会被 `beforeunload` 拦截；导出文件用 `tools/import_feynman.py` 拆成
   `feynman/<id>/<subblock_id>.json`（严格对齐规格字段）
+- **四维自评清单**：`feynman.json` 的 `rubric` 是四维对象（`concept` 核心概念 / `logic` 逻辑链条 /
+  `boundary` 边界条件 / `application` 场景应用），按层选维（L1 概念、L2 概念+逻辑、L3 边界+应用、L4 逻辑、L5 边界）；
+  渲染成四色标签的折叠清单（蓝/黄/红/绿），旧格式字符串自动降级为单组清单
 - 正文：句级分段（每句一个 `<p class="sent">`），段末句带 `sent-last`，用 CSS 区分句间距与段间距
 - 图谱：`skeleton.blocks[].subblock_ids` 显式父子结构 → 折叠卡片
 - **推论六层（v0.6）**：`my_inferences` 是 `{kind, claim}` 数组——`core` 1 条 + `forward` 2 条 + `backward` 2 条为必填，
@@ -452,6 +455,7 @@ Copy-Item dist\ebook-pipeline.exe . -Force
 | 2026-11-10 | v0.6 收尾：主题拆三层色板（底/术语/例子）、术语 WangTianxi 1.3em、pass0 ASR 纠错、字幕时间码剥离 |
 | 2026-11-10 | v0.6 增强：pass5 推论六层（核心+正反外延必填）、原文质量评估（七维度 AI 自选）、AI 自我反思 |
 | 2026-11-10 | v0.6 增强：heti 本地化（去 CDN）、`fix_analysis_quotes.py` 修补老文章错字、图谱字号放大、背景三层叠加 |
+| 2026-11-10 | v0.6 增强：pass9 rubric 改四维诊断（概念/逻辑/边界/应用），按层选维 + 四色标签渲染 |
 
 ---
 

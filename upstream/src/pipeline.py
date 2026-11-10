@@ -79,6 +79,28 @@ FEYNMAN_LAYERS = [
 ]
 FEYNMAN_BATCH_SIZE = 4
 
+# 费曼 rubric 四维（顺序即展示顺序）
+RUBRIC_DIMS = ("concept", "logic", "boundary", "application")
+
+
+def normalize_rubric(r):
+    """rubric 兼容：字符串（旧）-> {"concept": [...]}；对象 -> 清洗成四维。"""
+    if isinstance(r, str):
+        items = [x.strip() for x in r.splitlines() if x.strip()]
+        return {"concept": items} if items else {}
+    if not isinstance(r, dict):
+        return {}
+    out = {}
+    for k in RUBRIC_DIMS:
+        v = r.get(k)
+        if isinstance(v, str):
+            v = [v]
+        if isinstance(v, list):
+            items = [str(x).strip() for x in v if str(x).strip()]
+            if items:
+                out[k] = items
+    return out
+
 CONDENSE_SYSTEM = """你是严谨的文本压缩器。把给定片段压缩成结构化摘要，规则：
 1. 保留全部论点、定义、人名、书名、年份、关键术语与它们的原始写法；
 2. 删除重复、口语语气词、寒暄、与论证无关的细节；
@@ -521,7 +543,7 @@ def run_pass9(article_id, analysis, client, agent_md, depth=3, resume=False):
                 if not isinstance(lvl, int) or lvl < 1 or lvl > depth:
                     continue
                 q = (ly.get("question") or "").strip()
-                r = (ly.get("rubric") or "").strip()
+                r = normalize_rubric(ly.get("rubric"))
                 if not q or not r:
                     continue
                 name = ly.get("name") or dict(FEYNMAN_LAYERS).get(lvl, "")

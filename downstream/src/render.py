@@ -887,6 +887,52 @@ def render_terms_tab(terms, counts, marked, personal=None):
     return head + table + notes
 
 
+RUBRIC_DIMS_R = [
+    ("concept", "\U0001F9E0 核心概念", "rub-concept"),
+    ("logic", "\U0001F517 逻辑链条", "rub-logic"),
+    ("boundary", "\u26A0\uFE0F 边界条件", "rub-boundary"),
+    ("application", "\U0001F6E0 场景应用", "rub-application"),
+]
+
+
+def render_rubric(rub):
+    """
+    费曼自评清单。
+    - 新格式：{concept: [...], logic: [...], boundary: [...], application: [...]} 按维分组带色标
+    - 旧格式：字符串（按行拆）或已展开的 ul
+    默认折叠：先自己想，写完再展开对照。
+    """
+    if isinstance(rub, str):
+        items = [x.strip() for x in rub.splitlines() if x.strip()]
+        if not items:
+            return ""
+        lis = "".join("<li>%s</li>" % esc(x) for x in items)
+        return ('<details class="fr"><summary class="fr-toggle">自评清单</summary>'
+                '<ul class="feynman-rubric">%s</ul></details>' % lis)
+
+    if not isinstance(rub, dict):
+        return ""
+
+    groups = []
+    for key, label, cls in RUBRIC_DIMS_R:
+        items = rub.get(key) or []
+        if not isinstance(items, list):
+            continue
+        items = [str(x).strip() for x in items if str(x).strip()]
+        if not items:
+            continue
+        lis = "".join("<li>%s</li>" % esc(x) for x in items)
+        groups.append('<div class="rub-group %s">'
+                      '<span class="rub-tag">%s</span>'
+                      '<ul class="feynman-rubric">%s</ul></div>'
+                      % (cls, label, lis))
+
+    if not groups:
+        return ""
+    return ('<details class="fr"><summary class="fr-toggle">自评清单</summary>%s</details>'
+            % "".join(groups))
+
+
 def render_feynman_tab(feynman, analysis):
     """
     第四 Tab：费曼练习。
@@ -948,15 +994,7 @@ def render_feynman_tab(feynman, analysis):
                            % (esc(lvl), esc(ly.get("name", ""))))
                 out.append('<div class="feynman-q">%s</div>'
                            % esc(ly.get("question", "")))
-                rub = (ly.get("rubric") or "").strip()
-                if rub:
-                    items = "".join("<li>%s</li>" % esc(x.strip())
-                                    for x in rub.splitlines() if x.strip())
-                    # 默认折叠：先自己想，写完再展开对照
-                    out.append('<details class="fr">')
-                    out.append('<summary class="fr-toggle">自评清单</summary>')
-                    out.append('<ul class="feynman-rubric">%s</ul>' % items)
-                    out.append("</details>")
+                out.append(render_rubric(ly.get("rubric")))
                 out.append("</div>")
 
             out.append("</div>")

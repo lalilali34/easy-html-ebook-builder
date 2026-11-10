@@ -352,7 +352,17 @@ def validate_feynman(feynman, analysis=None):
                 levels.append(lvl)
             if not (ly.get("question") or "").strip():
                 errs.append("feynman.blocks.%s[%d].question 为空" % (bid, i))
-            if not (ly.get("rubric") or "").strip():
+
+            r = ly.get("rubric")
+            ok_r = False
+            if isinstance(r, str):
+                ok_r = bool(r.strip())
+            elif isinstance(r, dict):
+                ok_r = any(
+                    isinstance(v, list) and any(str(x).strip() for x in v)
+                    for v in r.values()
+                )
+            if not ok_r:
                 errs.append("feynman.blocks.%s[%d].rubric 为空" % (bid, i))
 
         if levels and levels != sorted(levels):
