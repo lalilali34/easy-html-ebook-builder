@@ -586,6 +586,62 @@ def glass_card(label, items):
             '<ul>%s</ul></div>' % (label, lis))
 
 
+# 推论分层（新格式）；顺序即展示顺序
+INFERENCE_KINDS = [
+    ("core", "核心推论"),
+    ("forward", "正向外延"),
+    ("backward", "反向外延"),
+    ("boundary", "边界条件"),
+    ("rival", "竞争解释"),
+    ("test", "检验点"),
+]
+
+
+def render_my_inferences(items):
+    """
+    兼容两种格式：
+    - 旧数据：["字符串", ...]        -> 平铺列表
+    - 新数据：[{kind, claim}, ...]   -> 按 kind 分组，带小标题
+    """
+    if not items:
+        return ""
+
+    if not any(isinstance(x, dict) for x in items):
+        lis = "".join("<li>%s</li>" % esc(x) for x in items)
+        return ('<div class="glass-card"><div class="card-label">\U0001F9E0 我的推论</div>'
+                '<ul>%s</ul></div>' % lis)
+
+    groups = {}
+    for x in items:
+        if isinstance(x, dict):
+            k = x.get("kind") or "core"
+            c = (x.get("claim") or "").strip()
+        else:
+            k, c = "core", str(x).strip()
+        if c:
+            groups.setdefault(k, []).append(c)
+
+    if not groups:
+        return ""
+
+    parts = ['<div class="glass-card infer-card">',
+             '<div class="card-label">\U0001F9E0 我的推论</div>']
+    for kind, label in INFERENCE_KINDS:
+        claims = groups.get(kind) or []
+        if not claims:
+            continue
+        parts.append('<div class="infer-group infer-%s">' % kind)
+        parts.append('<div class="infer-kind">%s</div>' % label)
+        if len(claims) == 1 and kind in ("core", "boundary", "rival", "test"):
+            parts.append('<p class="infer-claim">%s</p>' % esc(claims[0]))
+        else:
+            parts.append('<ul>%s</ul>' % "".join(
+                "<li>%s</li>" % esc(c) for c in claims))
+        parts.append("</div>")
+    parts.append("</div>")
+    return "".join(parts)
+
+
 def render_author_says(items):
     if not items:
         return ""
@@ -629,7 +685,7 @@ def render_subblock(b):
                    % "".join("<li>%s</li>" % esc(x) for x in kps))
 
     out.append(render_author_says(b.get("author_says") or []))
-    out.append(glass_card("\U0001F9E0 我的推论", b.get("my_inferences")))
+    out.append(render_my_inferences(b.get("my_inferences")))
     out.append(glass_card("\U0001F4A1 我的例子", b.get("my_examples")))
     out.append(glass_card("\u2753 我的疑问", b.get("my_questions")))
 
@@ -1017,6 +1073,15 @@ def render_one(article_id, force=False, check_only=False):
     css = extract_css(read_text(THEMES))
     css, font_rel = rewrite_font_paths(css, out_dir)
 
+    # heti 本地资源（离线可用）
+    heti_dir = DOWNSTREAM / "assets" / "heti"
+    try:
+        heti_rel = os.path.relpath(str(heti_dir), str(out_dir)).replace("\\", "/")
+        if not heti_rel.startswith("."):
+            heti_rel = "./" + heti_rel
+    except Exception:
+        heti_rel = "./assets/heti"
+
     # --- 读取数据
     try:
         analysis = load_json(analysis_p)
@@ -1070,6 +1135,7 @@ def render_one(article_id, force=False, check_only=False):
         "TITLE": esc(title),
         "STYLE": css,
         "FONT_REL": font_rel,
+        "HETI_REL": heti_rel,
         "ARTICLE_ID": esc(article_id),
         "GENERATED_AT": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "PANE_TEXT": pane_text,

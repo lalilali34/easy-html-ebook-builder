@@ -183,7 +183,7 @@ body[data-theme="1"] h3, body[data-theme="1"] h4 {
   /* 术语用 WangTianxi；不想要就删掉这一行 */
   font-family: 'WangTianxi XK', var(--font-family);
   /* 补偿装饰字体的视觉偏小：放大 + 基线微调，line-height:1 防止撑高行距 */
-  font-size: 1.15em;
+  font-size: 1.3em;
   line-height: 1;
   vertical-align: -0.02em;
 }

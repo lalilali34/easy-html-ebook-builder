@@ -87,6 +87,19 @@
         "timestamp": { "type": "number", "minimum": 0 }
       }
     },
+    "myInference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "claim"],
+      "description": "我的推论：core 恰好 1 条、forward 2 条、backward 2 条为必填；boundary/rival/test 可选。",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["core", "forward", "backward", "boundary", "rival", "test"]
+        },
+        "claim": { "type": "string", "minLength": 1 }
+      }
+    },
     "block": {
       "type": "object",
       "additionalProperties": false,
@@ -123,8 +136,13 @@
         },
         "my_inferences": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "我的推断，禁止混入 author_says。"
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              { "$ref": "#/definitions/myInference" }
+            ]
+          },
+          "description": "我的推论。新格式为 {kind, claim} 对象；旧数据为字符串（兼容保留）。"
         },
         "my_examples": {
           "type": "array",

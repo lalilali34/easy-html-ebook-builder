@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}}</title>
-<link rel="stylesheet" href="https://unpkg.com/heti/umd/heti.min.css">
+<link rel="stylesheet" href="{{HETI_REL}}/heti.min.css">
 <style>
 /* ============================================================
    由 downstream/src/render.py 内联生成，勿手改
@@ -384,25 +384,25 @@ main {
 }
 
 .graph-header .core-problem {
-  font-size: 34px !important;
+  font-size: 45px !important;
   line-height: 1.45 !important;
-  margin: 0 0 0.9rem;
+  margin: 0 0 1rem;
 }
 
 .graph-header .core-conclusion {
-  font-size: 21px !important;
+  font-size: 28px !important;
   opacity: 0.68;
   line-height: 1.7 !important;
   margin: 0;
 }
 
-.graph-block { margin-bottom: 2.6rem; }
+.graph-block { margin-bottom: 2.8rem; }
 
 .graph-block > h2 {
-  font-size: 25px !important;
+  font-size: 33px !important;
   padding-left: 0.8rem;
   border-left: 4px solid var(--theme-color-3, #3B82F6);
-  margin: 0 0 1rem;
+  margin: 0 0 1.1rem;
   line-height: 1.5 !important;
 }
 
@@ -418,8 +418,8 @@ details.graph-subblock {
 
 details.graph-subblock > summary {
   cursor: pointer;
-  padding: 0.75rem 1.1rem;
-  font-size: 19px !important;
+  padding: 0.85rem 1.1rem;
+  font-size: 25px !important;
   line-height: 1.5 !important;
   list-style: none;
   display: flex;
@@ -441,7 +441,7 @@ details.graph-subblock > summary::before {
 details.graph-subblock[open] > summary::before { transform: rotate(90deg); }
 
 details.graph-subblock > summary code {
-  font-size: 16px !important;
+  font-size: 21px !important;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.1rem 0.45rem;
   border-radius: 5px;
@@ -456,17 +456,17 @@ details.graph-subblock > summary code {
   border-left: 3px solid var(--theme-color-2, #3BB1F6);
   margin: 0.9rem 0;
   padding: 0.5rem 0 0.5rem 0.9rem;
-  font-size: 19px !important;
+  font-size: 25px !important;
   opacity: 0.9;
 }
 
 .key-points { margin: 0.8rem 0; padding-left: 1.3rem; }
-.key-points li { font-size: 20px !important; line-height: 1.75 !important; margin-bottom: 0.35rem; }
+.key-points li { font-size: 26px !important; line-height: 1.75 !important; margin-bottom: 0.35rem; }
 
 .author-says { margin: 1rem 0 0.8rem; }
 
 .author-says .say {
-  font-size: 19px !important;
+  font-size: 25px !important;
   line-height: 1.8 !important;
   margin: 0 0 0.7rem;
   padding-left: 0.9rem;
@@ -476,7 +476,7 @@ details.graph-subblock > summary code {
 .author-time {
   font-variant-numeric: tabular-nums;
   opacity: 0.55;
-  font-size: 16px !important;
+  font-size: 21px !important;
 }
 
 .paraphrase { opacity: 0.85; }
@@ -492,18 +492,43 @@ details.graph-subblock > summary code {
 }
 
 .glass-card .card-label {
-  font-size: 17px !important;
+  font-size: 22px !important;
   font-weight: 600;
   opacity: 0.85;
   margin-bottom: 0.4rem;
 }
 
 .glass-card ul { margin: 0; padding-left: 1.2rem; }
-.glass-card li { font-size: 18px !important; line-height: 1.7 !important; }
+.glass-card li { font-size: 24px !important; line-height: 1.7 !important; }
+
+/* 推论分层：核心 / 正向外延 / 反向外延 / 边界 / 竞争 / 检验 */
+.infer-card .infer-group { margin: 0.9rem 0; }
+.infer-card .infer-group:first-of-type { margin-top: 0.4rem; }
+.infer-kind {
+  font-size: 18px !important;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+  margin-bottom: 0.3rem;
+}
+.infer-claim {
+  font-size: 22px !important;
+  line-height: 1.78 !important;
+  margin: 0;
+}
+.infer-group ul { margin: 0; padding-left: 1.2rem; }
+.infer-group li { font-size: 22px !important; line-height: 1.78 !important; margin-bottom: 0.3rem; }
+
+.infer-core .infer-kind { color: var(--term-c2, #ff9f43); opacity: 0.95; }
+.infer-core .infer-claim { font-size: 23px !important; }
+.infer-forward .infer-kind { color: var(--term-c5, #34d399); opacity: 0.9; }
+.infer-backward .infer-kind { color: var(--term-c1, #ff5a5a); opacity: 0.9; }
+.infer-boundary .infer-kind,
+.infer-rival .infer-kind,
+.infer-test .infer-kind { color: var(--term-c4, #a78bfa); opacity: 0.85; }
 
 .confidence {
   display: inline-block;
-  font-size: 14px !important;
+  font-size: 19px !important;
   padding: 0.1rem 0.6rem;
   border-radius: 999px;
   opacity: 0.7;
@@ -511,18 +536,18 @@ details.graph-subblock > summary code {
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-.missing-block { color: #F59E0B; font-size: 16px !important; }
+.missing-block { color: #F59E0B; font-size: 21px !important; }
 
 /* ---------- 三层复述 ---------- */
 .recap .one-sentence {
-  font-size: 23px !important;
+  font-size: 31px !important;
   line-height: 1.7 !important;
   text-align: center;
   opacity: 0.92;
-  margin: 0.5rem 0 1.4rem;
+  margin: 0.5rem 0 1.5rem;
 }
 
-.recap h3 { font-size: 20px !important; margin: 1.4rem 0 0.6rem; }
+.recap h3 { font-size: 26px !important; margin: 1.4rem 0 0.6rem; }
 
 .three-q {
   background: rgba(255, 255, 255, 0.035);
@@ -531,9 +556,9 @@ details.graph-subblock > summary code {
   margin-bottom: 0.8rem;
 }
 
-.three-q p { font-size: 18px !important; line-height: 1.75 !important; margin: 0.35rem 0; }
+.three-q p { font-size: 24px !important; line-height: 1.75 !important; margin: 0.35rem 0; }
 .q-block code {
-  font-size: 16px !important;
+  font-size: 21px !important;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.1rem 0.45rem;
   border-radius: 5px;
@@ -852,7 +877,7 @@ details.graph-subblock > summary code {
   </div>
 </div>
 
-<script src="https://unpkg.com/heti/umd/heti-addon.min.js"></script>
+<script src="{{HETI_REL}}/heti-addon.min.js"></script>
 <script>
 (function () {
   "use strict";

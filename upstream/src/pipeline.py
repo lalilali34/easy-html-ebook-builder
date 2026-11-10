@@ -803,13 +803,39 @@ def run(article_id, dry_run=False, max_chars=DEFAULT_MAX_CHARS, client=None,
     says = normalize_by_block(p5a, valid_ids)
 
     log("[pass5] 阶段 B：my_* …")
-    p5b = call_json_cached(client, agent_md, "pass5", {
-        "blocks": merged,
-        "segments": segments,
-        "confirmed_author_says": says,
-        "stage": "B",
-    }, pkg / "analysis", resume, tag="5b")
-    my_layer = normalize_my_layer(p5b, valid_ids)
+    # 分批调用：一次塞全部 blocks 时模型会返回扁平数组而丢掉 block_id 归属
+    my_layer = {}
+    P5_BATCH = 3
+    for _i in range(0, len(merged), P5_BATCH):
+        _batch = merged[_i:_i + P5_BATCH]
+        _ids = [x["id"] for x in _batch]
+        log("  [pass5] 批 %d: %s" % (_i // P5_BATCH + 1, ", ".join(_ids)))
+        p5b = call_json_cached(client, agent_md, "pass5", {
+            "blocks": _batch,
+            "segments": segments,
+            "confirmed_author_says": {k: (says.get(k) or []) for k in _ids},
+            "stage": "B",
+            "output_format": {
+                "<block_id>": {
+                    "my_inferences": [
+                        {"kind": "core|forward|backward|boundary|rival|test",
+                         "claim": "一句话"}
+                    ],
+                    "my_examples": [],
+                    "my_questions": []
+                }
+            },
+            "instruction": "必须返回对象，键是上面给出的 block_id，每个都要有。"
+                           "my_inferences 中 core 恰好 1 条、forward 恰好 2 条、"
+                           "backward 恰好 2 条；boundary/rival/test 有内容才写。",
+        }, pkg / "analysis", resume, tag="5b_%d" % (_i // P5_BATCH + 1))
+        part = normalize_my_layer(p5b, valid_ids)
+        for _b in _batch:
+            if part.get(_b["id"]):
+                my_layer[_b["id"]] = part[_b["id"]]
+        _miss = [_b["id"] for _b in _batch if _b["id"] not in my_layer]
+        if _miss:
+            log("  [pass5-warn] 批未返回：%s" % ", ".join(_miss))
 
     for b in merged:
         bid = b["id"]
