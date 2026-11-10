@@ -8,8 +8,8 @@
 > `downstream/assets/fonts/`（`hanyi.woff2` / `wangtianxi.woff2` / `loli.woff2`）。缺失时会回退到系统字体，
 > 页面仍可正常显示，只是字形不同。字体版权归各自厂商所有，请自行取得授权。
 
-> **示例数据**：`corpus/20261026_literary_theory/` 是**合成的回归测试样本**，不含真实第三方内容。
-> 其余真实文章数据不在本仓库中。
+> **示例数据**：`corpus/20261110_knowledge-why-forget/` 是**完全原创的演示样本**（《为什么我们记不住读过的书》），
+> 不含任何第三方内容，可自由使用、修改、再分发。
 
 ---
 
@@ -188,7 +188,7 @@ ebook-pipeline/
 ```json
 {
   "schema_version": "1.0",
-  "article_id": "20261026_literary_theory",
+  "article_id": "20261110_knowledge-why-forget",
   "status": "ready",
   "artifacts": [{ "kind": "analysis", "path": "...", "sha256": "..." }],
   "stats": { "skeleton_blocks": 7, "subblocks": 29, "relations": 28 },
@@ -425,6 +425,6 @@ Copy-Item dist\ebook-pipeline.exe . -Force
 - **许可**：[MIT](LICENSE)。可自由使用、修改、商用，保留版权声明即可。
 - **字体**：仓库不含字体文件。`themes.md` 里声明的三款字体需自行购买/取得授权后放入
   `downstream/assets/fonts/`。缺失时回退系统字体，功能不受影响。
-- **示例数据**：仅 `corpus/20261026_literary_theory/`（合成回归样本）。真实文章数据不在仓库内。
+- **示例数据**：仅 `corpus/20261110_knowledge-why-forget/`（原创演示样本，可自由使用）。真实文章数据不在仓库内。
 - **隐私**：`.env`（API Key）、`inbox/`（原始素材）、`personal_terms/`（个人笔记）均不入库。
 - **贡献**：欢迎 issue / PR，改动请保持"一篇文章一个包、不共享全局状态"的架构约束。
