@@ -1,0 +1,79 @@
+{
+  "$comment": "契约层枚举单一真源。schema / validate / render / publish 全部从这里读，禁止在别处复写。改枚举只改本文件。",
+  "version": "1.0.0",
+  "updated_at": "2026-11-09",
+
+  "function": [
+    "定义",
+    "提出问题",
+    "主张",
+    "理由",
+    "证明步骤",
+    "例子",
+    "反驳",
+    "推论",
+    "过渡",
+    "结论"
+  ],
+
+  "relation_type": ["因此", "但是", "例如", "依赖", "反驳", "铺垫"],
+  "relation_type_desc": {
+    "因此": "from 推出 to",
+    "但是": "from 与 to 构成转折",
+    "例如": "to 是 from 的例子",
+    "依赖": "from 依赖 to —— to 是前提提供者，from 是下游使用者",
+    "反驳": "from 反驳 to",
+    "铺垫": "from 为 to 铺垫"
+  },
+
+  "confidence": ["high", "medium", "low"],
+  "confidence_desc": {
+    "high": "作者明确说出、且能在原文找到直接对应",
+    "medium": "需要结合上下文才能成立的推论",
+    "low": "结构位置可疑、或作者说得不充分"
+  },
+
+  "term_type": {
+    "1": "地点/空间/场域",
+    "2": "核心概念/理论/术语",
+    "3": "人物/哲学家/理论家",
+    "4": "物品/著作/文本",
+    "5": "事件/历史节点"
+  },
+  "term_type_class": {
+    "1": "term-type-1",
+    "2": "term-type-2",
+    "3": "term-type-3",
+    "4": "term-type-4",
+    "5": "term-type-5"
+  },
+
+  "supplement_example_class": {
+    "史": "supplement-history",
+    "哲": "supplement-philosophy",
+    "经": "supplement-economics",
+    "": "supplement-base"
+  },
+
+  "deliver_status": ["ready", "superseded", "failed"],
+  "artifact_kind": ["analysis", "article", "article_examples", "terms"],
+  "check_result": ["pass", "fail", "skip"],
+
+  "article_id_pattern": "^[0-9]{8}_[a-z0-9][a-z0-9_-]*$",
+  "article_id_examples": ["20261109_bourgeois", "20261026_literary_theory"],
+
+  "block_id_pattern": "^b[0-9]+(-[0-9]+)?$",
+  "skeleton_id_pattern": "^b[0-9]+$",
+
+  "paths": {
+    "$comment": "目录约定。render.py / publish.py / build_index.py 用相对仓库根的路径。",
+    "corpus": "corpus",
+    "terms": "terms",
+    "contract": "contract",
+    "downstream": "downstream",
+    "site": "site",
+    "package_build_dir": "build",
+    "deliver": "deliver.json",
+    "render_fingerprint": ".render.json"
+  }
+}

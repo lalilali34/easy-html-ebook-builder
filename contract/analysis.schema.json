@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "contract/analysis.schema.json",
+  "title": "字幕结构化分析结果 analysis.json",
+  "description": "P1-P6 补丁版。功能标签、关系类型、置信度、依赖引用全部为封闭集合或受限格式；author_says 每条必须可溯源；推断/例子/疑问与作者原话分字段；skeleton.blocks 必须通过 subblock_ids 显式声明父子结构。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "meta", "skeleton", "relations", "blocks", "recap"],
+  "definitions": {
+    "blockId": {
+      "type": "string",
+      "pattern": "^b[0-9]+(-[0-9]+)?$",
+      "description": "功能块 id：大块 b1，子块 b1-1；顶层 blocks 只用子块 id。"
+    },
+    "skeletonId": {
+      "type": "string",
+      "pattern": "^b[0-9]+$",
+      "description": "骨架大块 id，只允许 b1 / b2 这类不带连字符的形式。"
+    },
+    "dependRef": {
+      "description": "P1：依赖引用允许指向子块（b1-2），也允许写 边界可疑；不得编造不存在的位置。",
+      "anyOf": [
+        { "type": "string", "pattern": "^b[0-9]+(-[0-9]+)?$" },
+        { "type": "string", "enum": ["边界可疑"] }
+      ]
+    },
+    "function": {
+      "type": "string",
+      "description": "功能标签封闭集合，不允许自造标签。",
+      "enum": ["定义", "提出问题", "主张", "理由", "证明步骤", "例子", "反驳", "推论", "过渡", "结论"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "timeRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "minimum": 0 }
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "start", "end"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "minimum": 0 }
+      }
+    },
+    "skeletonBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "time_range", "function", "summary", "subblock_ids"],
+      "properties": {
+        "id": { "$ref": "#/definitions/skeletonId" },
+        "time_range": { "$ref": "#/definitions/timeRange" },
+        "function": { "$ref": "#/definitions/function" },
+        "summary": { "type": "string", "minLength": 1 },
+        "subblock_ids": {
+          "type": "array",
+          "minItems": 0,
+          "items": { "$ref": "#/definitions/blockId" },
+          "description": "P2：隶属本大块的子块 id，数组顺序即渲染顺序。必须与 blocks[] 中同前缀块一一对应（由 validate.py 语义校验）。"
+        }
+      }
+    },
+    "authorSay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "description": "作者说：text 可转述，但 quote 或 timestamp 至少一个，保证可回到原文。",
+      "anyOf": [
+        {
+          "required": ["quote"],
+          "properties": { "quote": { "type": "string", "minLength": 1 } }
+        },
+        { "required": ["timestamp"] }
+      ],
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "quote": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "number", "minimum": 0 }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "function",
+        "purpose",
+        "basis",
+        "depends_on",
+        "key_points",
+        "author_says",
+        "my_inferences",
+        "my_examples",
+        "my_questions",
+        "confidence"
+      ],
+      "properties": {
+        "id": { "$ref": "#/definitions/blockId" },
+        "function": { "$ref": "#/definitions/function" },
+        "time_range": { "$ref": "#/definitions/timeRange" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "basis": { "type": "string", "minLength": 1 },
+        "depends_on": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dependRef" }
+        },
+        "key_points": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "author_says": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/authorSay" }
+        },
+        "my_inferences": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "我的推断，禁止混入 author_says。"
+        },
+        "my_examples": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "my_questions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confidence": { "$ref": "#/definitions/confidence" }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "type"],
+      "properties": {
+        "from": { "$ref": "#/definitions/blockId" },
+        "to": { "$ref": "#/definitions/blockId" },
+        "type": {
+          "type": "string",
+          "description": "from 对 to 的关系：因此=from 推出 to；但是=转折；例如=to 是 from 的例子；依赖=from 依赖 to；反驳=from 反驳 to；铺垫=from 为 to 铺垫。",
+          "enum": ["因此", "但是", "例如", "依赖", "反驳", "铺垫"]
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["block_id", "why_needed", "basis", "depends_on"],
+      "properties": {
+        "block_id": { "$ref": "#/definitions/blockId" },
+        "why_needed": { "type": "string", "minLength": 1 },
+        "basis": { "type": "string", "minLength": 1 },
+        "depends_on": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/dependRef" }
+        }
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "P5：契约版本号，与 contract/enums.json 的 version 对齐。"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["article_id", "title", "source", "duration", "chapters"],
+      "properties": {
+        "article_id": {
+          "type": "string",
+          "pattern": "^[0-9]{8}_[a-z0-9][a-z0-9_-]*$",
+          "description": "P3：与 corpus/<id>/ 目录名、deliver.json.article_id 三处同源。slug 允许小写字母、数字、连字符与下划线。"
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "duration": { "type": "number", "minimum": 0 },
+        "chapters": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/chapter" }
+        }
+      }
+    },
+    "skeleton": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["core_problem", "core_conclusion", "blocks"],
+      "properties": {
+        "core_problem": { "type": "string", "minLength": 1 },
+        "core_conclusion": { "type": "string", "minLength": 1 },
+        "blocks": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/skeletonBlock" },
+          "minItems": 1
+        }
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/relation" }
+    },
+    "blocks": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/block" },
+      "minItems": 1
+    },
+    "recap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["one_sentence", "main_steps", "three_questions"],
+      "properties": {
+        "one_sentence": { "type": "string", "minLength": 1 },
+        "main_steps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "three_questions": {
+          "type": "array",
+          "description": "P4：每个子块一条，数量应等于 blocks 的子块数；不设 maxItems（由 validate.py 语义校验）。",
+          "items": { "$ref": "#/definitions/question" },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

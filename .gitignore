@@ -1,0 +1,68 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.pytest_cache/
+
+# ===== 构建产物 =====
+build/
+dist/
+site/*.html
+site/**/*.html
+
+# ===== PyInstaller 打包产物（exe 是生成物，不入库；用 tools/launcher.py 重建） =====
+build_pyi/
+/*.exe
+
+# ===== 发布记录（每次 publish 重算的生成物，不入库） =====
+# 核心输入是 analysis.json / text/*.md / terms/*.md，deliver.json 可随时重建
+deliver.json
+
+# ===== 临时 / 日志 =====
+*.log
+*.tmp
+.render.json
+.state/
+tmp/
+_archive/
+
+# ===== 密钥（绝不入库） =====
+.env
+.env.local
+.env.*.local
+
+# ===== 字体文件（版权归各厂商，不入库；自行放入 assets/fonts/） =====
+downstream/assets/fonts/*.woff2
+downstream/assets/fonts/*.woff
+downstream/assets/fonts/*.ttf
+downstream/assets/fonts/*.otf
+
+# ===== 用户素材投递口（原始文件是输入，不入库） =====
+inbox/
+
+# ===== dry-run 占位产物 =====
+*.dryrun.json
+*.dryrun.md
+
+# ===== pass 中间缓存（本地保留以便 --resume，不入库） =====
+corpus/**/analysis/pass.*.json
+
+# ===== 原始素材副本（源文件留档，不入库） =====
+corpus/**/source/orig.*
+
+# ===== 根目录临时脚本（诊断/一次性，不入库） =====
+/_*.py
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ===== 明确保留：以下目录下的数据文件不应被忽略 =====
+# corpus/ 下的 .json 和 .md 需要纳入版本控制
+# terms/ 下的 .md 需要纳入版本控制
+# 这两个目录没有被上面的规则覆盖，Git 会自动追踪它们

@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="https://unpkg.com/heti/umd/heti.min.css">
+<style>
+/* ============================================================
+   由 downstream/src/render.py 内联生成，勿手改
+   样式来源：downstream/themes.md（唯一真源）
+   渲染器版本：{{RENDERER_VERSION}}
+   ============================================================ */
+{{STYLE}}
+
+/* ============================================================
+   以下为渲染器固定骨架样式（不含主题变量，任何套装通用）
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+.book-head {
+  text-align: center;
+  padding: 2.2rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1.2rem;
+}
+
+/* 页面大标题（书名）：55px */
+.book-title {
+  font-size: 55px !important;
+  line-height: 1.3 !important;
+  margin: 0 0 1rem;
+}
+
+.book-meta {
+  font-size: 15px !important;
+  opacity: 0.6;
+  letter-spacing: 0.02em;
+  margin-top: 0.6rem;
+}
+
+/* ---------- Tab 骨架 ---------- */
+.tabbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1.6rem 0 1.8rem;
+}
+
+.tabbar label {
+  cursor: pointer;
+  padding: 0.55rem 1.5rem;
+  border-radius: 999px;
+  font-size: 20px !important;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  user-select: none;
+}
+
+.tabbar label:hover { background: rgba(255, 255, 255, 0.12); }
+
+.tabbar label.active {
+  background: var(--theme-color-3, #3B82F6);
+  border-color: var(--theme-color-3, #3B82F6);
+  color: #fff;
+}
+
+.tabbar .count {
+  font-size: 14px !important;
+  opacity: 0.75;
+  margin-left: 0.35rem;
+}
+
+.pane { display: none; animation: pane-in 0.22s ease-out both; }
+.pane.active { display: block; }
+
+@keyframes pane-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- 正文 Tab ---------- */
+/* ---------- 正文 Tab：正文 + 右侧目录 ---------- */
+main {
+  width: 100%;
+  max-width: none;
+}
+
+#pane-text.active {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  gap: 1rem;            /* 2rem -> 1rem：省出 16px 给目录 */
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;           /* 0.5rem -> 0：再省出 16px，正文宽度保持不变 */
+}
+
+.article-body {
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  counter-reset: sec;
+}
+
+/* 侧边目录（右侧） */
+.toc {
+  order: 2;
+  flex: 0 0 232px;      /* 200 -> 232，正文宽度由 gap/padding 补偿保持不变 */
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  padding-left: 1rem;
+  padding-right: 0.75rem;      /* 与右侧滚动条留出间隙 */
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 18px !important;
+  line-height: 1.5 !important;
+  scrollbar-gutter: stable;    /* 滚动条出现时不挤动文字 */
+}
+
+/* 细滚动条，避免占掉太多目录宽度 */
+.toc::-webkit-scrollbar { width: 6px; }
+.toc::-webkit-scrollbar-track { background: transparent; }
+.toc::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+}
+.toc::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); }
+
+.toc-title {
+  font-size: 16px !important;
+  letter-spacing: 0.18em;
+  opacity: 0.5;
+  margin-bottom: 0.9rem;
+}
+
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { margin-bottom: 0.5rem; }
+
+.toc a {
+  display: flex;
+  gap: 0.5rem;
+  color: #ffffff;          /* 与小标题（h2）同色 */
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.toc a:hover { opacity: 1; color: var(--theme-color-2); }
+.toc-num { opacity: 0.5; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.toc-text { line-height: 1.45; }
+
+/* 小标题序号 */
+.article-body h2 { counter-increment: sec; }
+.article-body h2::before {
+  content: counter(sec, decimal-leading-zero);
+  font-size: 0.6em;
+  opacity: 0.4;
+  margin-right: 0.5em;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 0.15em;
+}
+
+/* 顶部阅读进度条（渐变彩色） */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 0;
+  z-index: 9999;
+  background: linear-gradient(90deg, #3BDFF6 0%, #3BB1F6 20%, #3B82F6 40%,
+              #3B53F6 60%, #513BF6 78%, #9333EA 90%, #EC4899 100%);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.55);
+  transition: width 0.08s linear;
+}
+
+/* 例子卡片的类型图标 */
+.supplement-base strong::before { content: "🧩 "; }
+.supplement-history strong::before { content: "📜 "; }
+.supplement-philosophy strong::before { content: "🏛 "; }
+.supplement-economics strong::before { content: "📈 "; }
+
+/* ---------- 术语双浮层 ----------
+   关闭 themes.md 里的 CSS 伪元素 tooltip，改用下面的 JS 双浮层。
+   系统层（冷色蓝边）在上、个人层（暖色橙边）在上方，错位排列。 */
+.term::before, .term::after { display: none !important; }
+
+/* 仅个人命中的位置 */
+.term-personal {
+  border-bottom: none;
+  padding-bottom: 1px;
+  cursor: help;
+  color: #F59E0B;
+  background-image: linear-gradient(90deg, #F59E0B, #F97316);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 2px;
+}
+.term-personal:hover { background-size: 100% 4px; }
+
+/* hide:true 的位置：有个人笔记、但系统解释被抑制 */
+.term.term-empty { cursor: help; }
+
+.tip-stack {
+  position: fixed;
+  z-index: 99999;
+  display: none;
+  width: max-content;
+  max-width: min(92vw, 440px);
+}
+
+.tip {
+  pointer-events: auto;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 17px !important;
+  line-height: 1.6 !important;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  scrollbar-width: thin;
+}
+
+.tip.show { opacity: 1; transform: none; }
+
+/* 个人层：暖色、向上错位、偏左 */
+.tip-personal {
+  display: none;
+  background: #2b200a;
+  color: #ffe8a3;
+  border: 2px solid #F59E0B;
+  margin-right: 18px;
+}
+.tip-personal.show { display: block; }
+
+/* 系统层：冷色、偏右 */
+.tip-system {
+  display: none;
+  margin-top: 10px;
+  margin-left: 18px;
+  background: #0a1a2e;
+  color: #cdf40b;
+  border: 2px solid #3B82F6;
+}
+.tip-system.show { display: block; }
+
+.tip-head {
+  font-size: 20px !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+  margin-bottom: 0.55rem;
+}
+
+.tip-scope { font-size: 16px !important; font-weight: 400; opacity: 0.8; }
+
+.tip-body { white-space: pre-wrap; word-break: break-word; }
+
+.tip::-webkit-scrollbar { width: 6px; }
+.tip::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+}
+
+/* ---------- 笔记编辑 ---------- */
+.tip-stack { position: fixed; }
+.tip-edit {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: #1f1f2e;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 2;
+}
+.tip-edit:hover { background: #F59E0B; border-color: #F59E0B; }
+
+.note-bar {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(18, 18, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 15px !important;
+}
+.note-bar.dirty { border-color: #F59E0B; box-shadow: 0 0 0 1px rgba(245,158,11,.35); }
+.note-bar button {
+  padding: 0.3rem 0.8rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+  font-size: 15px !important;
+  cursor: pointer;
+}
+.note-bar button:hover { background: rgba(255, 255, 255, 0.14); }
+#note-save { border-color: #3B82F6; }
+.note-bar.dirty #note-save { background: #F59E0B; border-color: #F59E0B; color: #1a1a26; }
+#note-status { opacity: 0.75; min-width: 4.5em; }
+
+.note-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.62);
+}
+.note-modal.show { display: flex; }
+.note-box {
+  width: min(92vw, 700px);
+  background: #1a1a26;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 1.2rem 1.3rem;
+}
+.note-box-title {
+  font-size: 20px !important;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+.note-box textarea {
+  width: 100%;
+  min-height: 220px;
+  box-sizing: border-box;
+  background: #0f0f18;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: 17px !important;
+  line-height: 1.65 !important;
+  font-family: inherit;
+  resize: vertical;
+}
+.note-box-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+.note-box-actions button {
+  padding: 0.4rem 1.1rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+  font-size: 16px !important;
+  cursor: pointer;
+}
+#note-ok { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+
+@media (max-width: 1100px) {
+  #pane-text.active { display: block; max-width: none; }
+  .toc { display: none; }
+  .book-title { font-size: 38px !important; }
+}
+
+/* ---------- 图谱 Tab ---------- */
+.graph-header {
+  text-align: center;
+  margin-bottom: 2.4rem;
+}
+
+.graph-header .core-problem {
+  font-size: 34px !important;
+  line-height: 1.45 !important;
+  margin: 0 0 0.9rem;
+}
+
+.graph-header .core-conclusion {
+  font-size: 21px !important;
+  opacity: 0.68;
+  line-height: 1.7 !important;
+  margin: 0;
+}
+
+.graph-block { margin-bottom: 2.6rem; }
+
+.graph-block > h2 {
+  font-size: 25px !important;
+  padding-left: 0.8rem;
+  border-left: 4px solid var(--theme-color-3, #3B82F6);
+  margin: 0 0 1rem;
+  line-height: 1.5 !important;
+}
+
+.fn-tag { opacity: 0.55; font-weight: 400; margin-right: 0.35rem; }
+
+details.graph-subblock {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  margin-bottom: 0.7rem;
+  overflow: hidden;
+}
+
+details.graph-subblock > summary {
+  cursor: pointer;
+  padding: 0.75rem 1.1rem;
+  font-size: 19px !important;
+  line-height: 1.5 !important;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+details.graph-subblock > summary::-webkit-details-marker { display: none; }
+
+details.graph-subblock > summary::before {
+  content: "\25B8";
+  display: inline-block;
+  transition: transform 0.18s ease;
+  opacity: 0.55;
+  margin-right: 0.35rem;
+}
+
+details.graph-subblock[open] > summary::before { transform: rotate(90deg); }
+
+details.graph-subblock > summary code {
+  font-size: 16px !important;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.45rem;
+  border-radius: 5px;
+}
+
+.subblock-body {
+  padding: 0.2rem 1.2rem 1.1rem 2.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.subblock-body blockquote.purpose {
+  border-left: 3px solid var(--theme-color-2, #3BB1F6);
+  margin: 0.9rem 0;
+  padding: 0.5rem 0 0.5rem 0.9rem;
+  font-size: 19px !important;
+  opacity: 0.9;
+}
+
+.key-points { margin: 0.8rem 0; padding-left: 1.3rem; }
+.key-points li { font-size: 20px !important; line-height: 1.75 !important; margin-bottom: 0.35rem; }
+
+.author-says { margin: 1rem 0 0.8rem; }
+
+.author-says .say {
+  font-size: 19px !important;
+  line-height: 1.8 !important;
+  margin: 0 0 0.7rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.14);
+}
+
+.author-time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+  font-size: 16px !important;
+}
+
+.paraphrase { opacity: 0.85; }
+
+/* 毛玻璃卡片（AGENTS.md 9.3 规范） */
+.glass-card {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0.8rem 0;
+}
+
+.glass-card .card-label {
+  font-size: 17px !important;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: 0.4rem;
+}
+
+.glass-card ul { margin: 0; padding-left: 1.2rem; }
+.glass-card li { font-size: 18px !important; line-height: 1.7 !important; }
+
+.confidence {
+  display: inline-block;
+  font-size: 14px !important;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.missing-block { color: #F59E0B; font-size: 16px !important; }
+
+/* ---------- 三层复述 ---------- */
+.recap .one-sentence {
+  font-size: 23px !important;
+  line-height: 1.7 !important;
+  text-align: center;
+  opacity: 0.92;
+  margin: 0.5rem 0 1.4rem;
+}
+
+.recap h3 { font-size: 20px !important; margin: 1.4rem 0 0.6rem; }
+
+.three-q {
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.8rem;
+}
+
+.three-q p { font-size: 18px !important; line-height: 1.75 !important; margin: 0.35rem 0; }
+.q-block code {
+  font-size: 16px !important;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.45rem;
+  border-radius: 5px;
+}
+
+/* ---------- 术语 Tab ---------- */
+.terms-summary {
+  font-size: 17px !important;
+  opacity: 0.7;
+  margin-bottom: 1rem;
+}
+
+.terms-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 21px !important;
+}
+
+.terms-table th {
+  text-align: left;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 600;
+  opacity: 0.8;
+  white-space: nowrap;
+  font-size: 22px !important; /* 加一行控制表头字号 */
+}
+
+.terms-table td {
+  padding: 0.55rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+  line-height: 1.6 !important;
+}
+
+.terms-table tr.unmatched td { opacity: 0.42; }
+.terms-table .col-num { text-align: right; font-variant-numeric: tabular-nums; }
+.terms-table .col-type { text-align: center; white-space: nowrap; }
+.terms-table .col-alias { font-size: 18px !important; opacity: 0.65; max-width: 220px; }
+
+.unmatched-badge {
+  display: inline-block;
+  font-size: 12px !important;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.10);
+  opacity: 0.7;
+  margin-left: 0.4rem;
+}
+
+.empty { opacity: 0.6; font-size: 18px !important; }
+
+/* ---------- 练习 Tab（费曼） ---------- */
+.feynman-wrap { max-width: 960px; margin: 0 auto; }
+.feynman-intro { font-size: 17px !important; opacity: 0.65; margin-bottom: 1.6rem; }
+.feynman-group { margin-bottom: 2.4rem; }
+.feynman-group-title {
+  font-size: 26px !important;
+  margin: 0 0 1rem;
+  padding-left: 0.6rem;
+  border-left: 4px solid var(--theme-color-3);
+  line-height: 1.5 !important;
+}
+.feynman-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.9rem;
+}
+.feynman-card-head {
+  font-size: 16px !important;
+  opacity: 0.6;
+  margin-bottom: 0.5rem;
+}
+.feynman-card-head code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+.feynman-purpose { font-size: 17px !important; opacity: 0.8; margin: 0 0 0.9rem; }
+.feynman-layer {
+  margin: 0.9rem 0;
+  padding-left: 0.85rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+.feynman-layer-head {
+  font-size: 15px !important;
+  letter-spacing: 0.06em;
+  opacity: 0.55;
+  margin-bottom: 0.35rem;
+}
+.feynman-q {
+  font-size: 19px !important;
+  line-height: 1.7 !important;
+  margin-bottom: 0.5rem;
+}
+.feynman-rubric { margin: 0; padding-left: 1.2rem; }
+.feynman-rubric li {
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  opacity: 0.72;
+  margin-bottom: 0.25rem;
+}
+
+/* 自评清单：默认折叠，点箭头展开（先自己想，写完再对照） */
+.fr { margin: 0.35rem 0 0; }
+.fr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 15px !important;
+  color: #9ca3af;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  user-select: none;
+}
+.fr-toggle::-webkit-details-marker { display: none; }
+.fr-toggle:hover { color: #d1d5db; background: rgba(255, 255, 255, 0.05); }
+.fr-toggle::before {
+  content: "▾";
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform 0.16s ease;
+  transform: rotate(-90deg);
+}
+.fr[open] .fr-toggle::before { transform: rotate(0deg); }
+.fr[open] .fr-toggle { color: #d1d5db; }
+.fr .feynman-rubric { margin-top: 0.4rem; }
+
+/* ---------- 费曼作答 ---------- */
+.fe-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.4rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 15px !important;
+}
+.fe-toolbar.dirty { border-color: #F59E0B; }
+.fe-toolbar select {
+  background: #0f0f18;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 0.2rem 0.4rem;
+  font-size: 15px !important;
+}
+.fe-toolbar button {
+  padding: 0.3rem 0.85rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+  font-size: 15px !important;
+  cursor: pointer;
+}
+.fe-toolbar button:hover { background: rgba(255, 255, 255, 0.14); }
+#fe-save { border-color: #3B82F6; }
+.fe-toolbar.dirty #fe-save { background: #F59E0B; border-color: #F59E0B; color: #1a1a26; }
+#fe-status { opacity: 0.72; }
+
+.fe-answer { margin-top: 0.7rem; }
+.fe-input {
+  width: 100%;
+  min-height: 92px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.25);
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  font-size: 17px !important;
+  line-height: 1.6 !important;
+  font-family: inherit;
+  resize: vertical;
+}
+.fe-actions { display: flex; gap: 0.4rem; margin-top: 0.45rem; }
+.fe-st {
+  padding: 0.18rem 0.7rem;
+  font-size: 13px !important;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+}
+.fe-st.on {
+  background: var(--theme-color-3);
+  border-color: var(--theme-color-3);
+  color: #fff;
+}
+.feynman-layer.done .feynman-q { opacity: 0.65; }
+
+/* 缺口回链 chips */
+.fe-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}
+.fe-gap {
+  padding: 0.16rem 0.6rem;
+  font-size: 13px !important;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.12);
+  color: #FBBF24;
+  cursor: pointer;
+}
+.fe-gap:hover { background: rgba(245, 158, 11, 0.24); }
+
+.feynman-card.fe-hit {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+  transition: outline-color 0.3s ease;
+}
+
+/* 缺口跳转失败的轻提示 */
+.fe-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2.6rem;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 100002;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.95);
+  color: #1a1a26;
+  font-size: 15px !important;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fe-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 720px) {
+  .terms-table .col-alias { display: none; }
+  .tabbar label { font-size: 17px !important; padding: 0.45rem 1.1rem; }
+}
+</style>
+</head>
+<body class="heti" data-theme="1" data-article="{{ARTICLE_ID}}">
+
+<div class="progress-bar" id="progress"></div>
+
+<header class="book-head">
+  <h1 class="book-title">{{TITLE}}</h1>
+  <p class="book-meta">{{ARTICLE_ID}} · 渲染于 {{GENERATED_AT}}</p>
+</header>
+
+<nav class="tabbar" id="tabbar">
+  <label data-tab="text" class="active">正文</label>
+  <label data-tab="graph">图谱<span class="count">{{SUBBLOCK_COUNT}}</span></label>
+  <label data-tab="terms">术语<span class="count">{{TERM_COUNT}}</span></label>
+  <label data-tab="feynman">练习<span class="count">{{FEYNMAN_COUNT}}</span></label>
+</nav>
+
+<main>
+  <section id="pane-text" class="pane active">
+{{TOC}}
+    <article class="article-body">
+{{PANE_TEXT}}
+    </article>
+  </section>
+
+  <section id="pane-graph" class="pane">
+{{PANE_GRAPH}}
+  </section>
+
+  <section id="pane-terms" class="pane">
+{{PANE_TERMS}}
+  </section>
+
+  <section id="pane-feynman" class="pane">
+{{PANE_FEYNMAN}}
+  </section>
+</main>
+
+<!-- 双术语浮层容器：个人层在上，系统层在下 -->
+<div class="tip-stack" id="tip-stack">
+  <button class="tip-edit" id="tip-edit" type="button" title="编辑我的笔记">✏️</button>
+  <div class="tip tip-personal" id="tip-personal">
+    <div class="tip-head">📝 我的笔记<span class="tip-scope" id="tip-scope"></span></div>
+    <div class="tip-body" id="tip-personal-body"></div>
+  </div>
+  <div class="tip tip-system" id="tip-system">
+    <div class="tip-head">系统解释</div>
+    <div class="tip-body" id="tip-system-body"></div>
+  </div>
+</div>
+
+<!-- 笔记：统一保存栏 + 编辑弹窗 -->
+<div class="note-bar" id="note-bar">
+  <button id="note-save" type="button">保存笔记</button>
+  <span id="note-status">无修改</span>
+  <button id="note-export" type="button">导出 md</button>
+</div>
+
+<div class="note-modal" id="note-modal">
+  <div class="note-box">
+    <div class="note-box-title">编辑笔记：<span id="note-term"></span></div>
+    <textarea id="note-input" placeholder="写下你的理解，格式不限……"></textarea>
+    <div class="note-box-actions">
+      <button id="note-ok" type="button">确定</button>
+      <button id="note-cancel" type="button">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/heti/umd/heti-addon.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ---- 1. 三 Tab 切换（零依赖）
+  // ---- 0. 无费曼骨架时移除「练习」Tab（老文章兼容）
+  (function () {
+    var pane = document.getElementById("pane-feynman");
+    var label = document.querySelector('#tabbar [data-tab="feynman"]');
+    if (!pane || !label) { return; }
+    if (!pane.textContent.trim()) {
+      if (label.parentNode) { label.parentNode.removeChild(label); }
+      if (pane.parentNode) { pane.parentNode.removeChild(pane); }
+    }
+  })();
+
+  var labels = document.querySelectorAll("#tabbar label");
+  var panes = document.querySelectorAll(".pane");
+
+  function activate(name) {
+    Array.prototype.forEach.call(labels, function (l) {
+      l.classList.toggle("active", l.getAttribute("data-tab") === name);
+    });
+    Array.prototype.forEach.call(panes, function (p) {
+      p.classList.toggle("active", p.id === "pane-" + name);
+    });
+  }
+
+  Array.prototype.forEach.call(labels, function (l) {
+    l.addEventListener("click", function () {
+      activate(l.getAttribute("data-tab"));
+    });
+  });
+
+  // ---- 2. 时间格式化（秒 -> mm:ss）
+  Array.prototype.forEach.call(document.querySelectorAll(".time-format"), function (el) {
+    var seconds = parseFloat(el.getAttribute("data-time"));
+    if (isNaN(seconds)) { return; }
+    var m = Math.floor(seconds / 60);
+    var s = Math.floor(seconds % 60);
+    el.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+  });
+
+  // ---- 3. 顶部阅读进度条
+  var bar = document.getElementById("progress");
+  if (bar) {
+    var updateBar = function () {
+      var el = document.documentElement;
+      var max = el.scrollHeight - el.clientHeight;
+      var pct = max > 0 ? (el.scrollTop / max) * 100 : 0;
+      bar.style.width = pct.toFixed(2) + "%";
+    };
+    window.addEventListener("scroll", updateBar, { passive: true });
+    window.addEventListener("resize", updateBar);
+    updateBar();
+  }
+
+  // ---- 4. 双术语浮层 + 笔记编辑
+  (function () {
+    var stack = document.getElementById("tip-stack");
+    var tipS = document.getElementById("tip-system");
+    var tipP = document.getElementById("tip-personal");
+    var bodyS = document.getElementById("tip-system-body");
+    var bodyP = document.getElementById("tip-personal-body");
+    var scopeEl = document.getElementById("tip-scope");
+    if (!stack) { return; }
+
+    var current = null;
+    var closeTimer = null;
+
+    // ---- 笔记存储（localStorage，按文章隔离）
+    var ARTICLE_ID = document.body.getAttribute("data-article") || "unknown";
+    var STORE_KEY = "personal_notes:" + ARTICLE_ID;
+    var SAVED = {};
+    try {
+      SAVED = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {};
+    } catch (e) { SAVED = {}; }
+    var PENDING = {};
+    var editing = null;
+
+    var bar = document.getElementById("note-bar");
+    var statusEl = document.getElementById("note-status");
+    var modal = document.getElementById("note-modal");
+    var input = document.getElementById("note-input");
+    var termEl = document.getElementById("note-term");
+
+    function noteOf(name, fallback) {
+      if (!name) { return fallback || ""; }
+      if (Object.prototype.hasOwnProperty.call(PENDING, name)) {
+        return PENDING[name].body;
+      }
+      if (SAVED[name]) { return SAVED[name].body; }
+      return fallback || "";
+    }
+
+    function refreshBar() {
+      if (!bar || !statusEl) { return; }
+      var n = Object.keys(PENDING).length;
+      if (n) {
+        bar.classList.add("dirty");
+        statusEl.textContent = n + " 处未保存";
+      } else {
+        bar.classList.remove("dirty");
+        statusEl.textContent = "无修改";
+      }
+    }
+
+    function openEditor(host) {
+      if (!host || !modal || !input) { return; }
+      var name = host.getAttribute("data-pers-name") ||
+                 host.getAttribute("data-term");
+      if (!name) { return; }
+      editing = { name: name, scope: host.getAttribute("data-scope") || "" };
+      termEl.textContent = name;
+      input.value = noteOf(name, host.getAttribute("data-personal") || "");
+      modal.classList.add("show");
+      setTimeout(function () { input.focus(); }, 30);
+    }
+
+    function place(el) {
+      stack.style.visibility = "hidden";
+      stack.style.display = "block";
+
+      var r = el.getBoundingClientRect();
+      var sw = stack.offsetWidth;
+      var sh = stack.offsetHeight;
+      var pad = 10;
+
+      var left = r.left + r.width / 2 - sw / 2;
+      left = Math.max(8, Math.min(left, window.innerWidth - sw - 8));
+
+      var top = r.top - sh - pad;
+      if (top < 8) {
+        top = r.bottom + pad;
+      }
+
+      stack.style.left = left + "px";
+      stack.style.top = top + "px";
+      stack.style.visibility = "visible";
+    }
+
+    function show(el) {
+      var key = el.getAttribute("data-pers-name") ||
+                el.getAttribute("data-term") || "";
+      var sysText = el.getAttribute("data-tooltip") || "";
+      var persText = noteOf(key, el.getAttribute("data-personal") || "");
+      var scope = el.getAttribute("data-scope") || "";
+
+      if (!sysText && !persText) { hide(); return; }
+
+      current = el;
+      bodyS.textContent = sysText;
+      bodyP.textContent = persText;
+      scopeEl.textContent = scope ? " · " + scope : "";
+
+      tipS.classList.toggle("show", !!sysText);
+      tipP.classList.toggle("show", !!persText);
+
+      place(el);
+    }
+
+    function hide() {
+      current = null;
+      tipS.classList.remove("show");
+      tipP.classList.remove("show");
+      stack.style.display = "none";
+    }
+
+    function scheduleClose() {
+      clearTimeout(closeTimer);
+      closeTimer = setTimeout(hide, 180);
+    }
+
+    function cancelClose() {
+      clearTimeout(closeTimer);
+    }
+
+    document.addEventListener("mouseover", function (e) {
+      var t = e.target;
+      if (!t || !t.closest) { return; }
+      var el = t.closest("[data-tooltip], [data-personal]");
+      if (el && el !== current) {
+        cancelClose();
+        show(el);
+      }
+    });
+
+    document.addEventListener("mouseout", function (e) {
+      var t = e.target;
+      if (!t || !t.closest) { return; }
+      var el = t.closest("[data-tooltip], [data-personal]");
+      if (el && el === current) {
+        var to = e.relatedTarget;
+        if (!to || !to.closest || !to.closest("[data-tooltip], [data-personal]")) {
+          scheduleClose();
+        }
+      }
+    });
+
+    stack.addEventListener("mouseenter", cancelClose);
+    stack.addEventListener("mouseleave", scheduleClose);
+
+    // 暴露给外部（费曼缺口回链用）：按元素直接唤起浮层
+    window.__showTermTip = function (el) {
+      if (el) { cancelClose(); show(el); }
+    };
+
+    window.addEventListener("scroll", function () {
+      if (current) { place(current); }
+    }, { passive: true });
+
+    // ---- 编辑按钮（浮层右上角）
+    var editBtn = document.getElementById("tip-edit");
+    if (editBtn) {
+      editBtn.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        cancelClose();
+        openEditor(current);
+      });
+    }
+
+    // ---- 弹窗：确定 / 取消
+    if (modal) {
+      var okBtn = document.getElementById("note-ok");
+      var cancelBtn = document.getElementById("note-cancel");
+      if (okBtn) {
+        okBtn.addEventListener("click", function () {
+          if (!editing) { return; }
+          PENDING[editing.name] = { body: input.value, scope: editing.scope };
+          modal.classList.remove("show");
+          editing = null;
+          refreshBar();
+          if (current) { show(current); }
+        });
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", function () {
+          modal.classList.remove("show");
+          editing = null;
+        });
+      }
+    }
+
+    // ---- 统一保存
+    var saveBtn = document.getElementById("note-save");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", function () {
+        var n = Object.keys(PENDING).length;
+        Object.keys(PENDING).forEach(function (k) { SAVED[k] = PENDING[k]; });
+        PENDING = {};
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(SAVED)); } catch (e) {}
+        refreshBar();
+        if (n && statusEl) {
+          statusEl.textContent = "已保存 " + Object.keys(SAVED).length + " 条";
+          setTimeout(refreshBar, 1600);
+        }
+      });
+    }
+
+    // ---- 导出 md
+    var exportBtn = document.getElementById("note-export");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function () {
+        var names = Object.keys(SAVED);
+        if (!names.length) {
+          if (statusEl) {
+            statusEl.textContent = "没有可导出的笔记";
+            setTimeout(refreshBar, 1600);
+          }
+          return;
+        }
+        var lines = [];
+        names.sort().forEach(function (name) {
+          var rec = SAVED[name];
+          lines.push("## " + name);
+          lines.push("match: " + name);
+          if (rec.scope) { lines.push("scope: " + rec.scope); }
+          lines.push("hide: false");
+          lines.push("");
+          lines.push(rec.body || "");
+          lines.push("");
+        });
+        var blob = new Blob([lines.join("\n")],
+                            { type: "text/markdown;charset=utf-8" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = ARTICLE_ID + ".md";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+        if (statusEl) {
+          statusEl.textContent = "已导出，请放入 personal_terms/";
+          setTimeout(refreshBar, 2600);
+        }
+      });
+    }
+
+    // ---- 未保存提醒
+    window.addEventListener("beforeunload", function (e) {
+      if (Object.keys(PENDING).length) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    refreshBar();
+  })();
+
+  // ---- 5. 费曼练习（作答 / 保存 / 导出）
+  (function () {
+    var wrap = document.getElementById("pane-feynman");
+    if (!wrap) { return; }
+    var cards = wrap.querySelectorAll(".feynman-card");
+    if (!cards.length) { return; }
+
+    var ARTICLE_ID = document.body.getAttribute("data-article") || "unknown";
+    var KEY = "feynman_notes:" + ARTICLE_ID;
+    var STORE = {};
+    try {
+      STORE = JSON.parse(localStorage.getItem(KEY) || "{}") || {};
+    } catch (e) { STORE = {}; }
+
+    var dirty = false;
+    var statusEl = document.getElementById("fe-status");
+    var barEl = wrap.querySelector(".fe-toolbar");
+
+    // max_depth 必须取自骨架（工具栏 data-max-depth），不能写死
+    var MAX_DEPTH = 3;
+    if (barEl) {
+      var dm = parseInt(barEl.getAttribute("data-max-depth"), 10);
+      if (dm > 0) { MAX_DEPTH = dm; }
+    }
+
+    function clampDepth(v) {
+      if (!v || v < 1) { return MAX_DEPTH; }
+      if (v > MAX_DEPTH) {
+        if (statusEl) { statusEl.textContent = "目标深度不能超过 " + MAX_DEPTH + "，已钳制"; }
+        return MAX_DEPTH;
+      }
+      return v;
+    }
+
+    function markDirty() {
+      dirty = true;
+      if (barEl) { barEl.classList.add("dirty"); }
+      if (statusEl) { statusEl.textContent = "有未保存修改"; }
+    }
+    function markClean(msg) {
+      dirty = false;
+      if (barEl) { barEl.classList.remove("dirty"); }
+      if (statusEl) { statusEl.textContent = msg || "已保存"; }
+    }
+
+    // 轻量 Toast：缺口找不到目标时提示，不打断
+    function toast(msg) {
+      var t = document.getElementById("fe-toast");
+      if (!t) {
+        t = document.createElement("div");
+        t.id = "fe-toast";
+        t.className = "fe-toast";
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.classList.add("show");
+      if (t._timer) { clearTimeout(t._timer); }
+      t._timer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+    }
+
+    function applyStatus(layerEl, st) {
+      layerEl.classList.toggle("done", st === "done");
+      Array.prototype.forEach.call(layerEl.querySelectorAll(".fe-st"), function (b) {
+        b.classList.toggle("on", b.getAttribute("data-st") === st);
+      });
+    }
+
+    // ---- 缺口回链：[[b2-3]] 跳块，[[术语]] 唤起浮层
+    function findTermEl(name) {
+      var els = document.querySelectorAll(".term[data-term]");
+      for (var i = 0; i < els.length; i++) {
+        if (els[i].getAttribute("data-term") === name) { return els[i]; }
+      }
+      return null;
+    }
+
+    function jumpToBlock(bid) {
+      var card = wrap.querySelector('[data-subblock="' + bid + '"]');
+      if (!card) {
+        toast("找不到块：" + bid);
+        return;
+      }
+      card.scrollIntoView({ block: "center", behavior: "smooth" });
+      card.classList.add("fe-hit");
+      setTimeout(function () { card.classList.remove("fe-hit"); }, 1400);
+    }
+
+    function jumpToTerm(name) {
+      var el = findTermEl(name);
+      var label = document.querySelector('#tabbar [data-tab="text"]');
+      if (label) { label.click(); }
+      setTimeout(function () {
+        if (!el) {
+          toast("正文里没有这个术语：" + name);
+          return;
+        }
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        if (window.__showTermTip) { window.__showTermTip(el); }
+      }, 80);
+    }
+
+    // 从文本里解析 [[b2-3]] 形式的缺口标记
+    function parseGaps(text) {
+      var out = [];
+      if (!text) { return out; }
+      var re = /\[\[([^\]\n]+)\]\]/g;
+      var m;
+      while ((m = re.exec(text)) !== null) {
+        var start = Math.max(0, m.index - 40);
+        var end = Math.min(text.length, m.index + m[0].length + 40);
+        out.push({
+          kind: "manual",
+          ref: m[1].trim(),
+          note: text.slice(start, end).trim()
+        });
+      }
+      return out;
+    }
+
+    var targetSel = document.getElementById("fe-target");
+    var targetDepth = clampDepth(targetSel ? parseInt(targetSel.value, 10) : MAX_DEPTH);
+    if (targetSel && String(targetDepth) !== targetSel.value) {
+      targetSel.value = String(targetDepth);
+    }
+
+    Array.prototype.forEach.call(cards, function (card) {
+      var sid = card.getAttribute("data-subblock");
+      var rec = STORE[sid] || { target_depth: targetDepth, layers: {} };
+      rec.layers = rec.layers || {};
+      STORE[sid] = rec;
+
+      Array.prototype.forEach.call(card.querySelectorAll(".feynman-layer"),
+        function (layer) {
+          var lvl = layer.getAttribute("data-level");
+          var lrec = rec.layers[lvl] || { answer: "", status: "not_started" };
+          rec.layers[lvl] = lrec;
+
+          var box = document.createElement("div");
+          box.className = "fe-answer";
+
+          var ta = document.createElement("textarea");
+          ta.className = "fe-input";
+          ta.placeholder = "写下你的回答……";
+          ta.value = lrec.answer || "";
+          box.appendChild(ta);
+
+          var acts = document.createElement("div");
+          acts.className = "fe-actions";
+          [["not_started", "未开始"], ["in_progress", "进行中"], ["done", "完成"]]
+            .forEach(function (pair) {
+              var b = document.createElement("button");
+              b.type = "button";
+              b.className = "fe-st";
+              b.setAttribute("data-st", pair[0]);
+              b.textContent = pair[1];
+              b.addEventListener("click", function () {
+                lrec.status = pair[0];
+                lrec.updated_at = new Date().toISOString();
+                applyStatus(layer, pair[0]);
+                markDirty();
+              });
+              acts.appendChild(b);
+            });
+          box.appendChild(acts);
+
+          var gapsBox = document.createElement("div");
+          gapsBox.className = "fe-gaps";
+          box.appendChild(gapsBox);
+
+          layer.appendChild(box);
+
+          function refreshGaps() {
+            var gaps = parseGaps(ta.value);
+            gapsBox.innerHTML = "";
+            if (!gaps.length) { return; }
+            gaps.forEach(function (g) {
+              var chip = document.createElement("button");
+              chip.type = "button";
+              chip.className = "fe-gap";
+              chip.textContent = "↗ " + g.ref;
+              chip.title = g.note;
+              chip.addEventListener("click", function (e) {
+                e.preventDefault();
+                if (/^b\d+(-\d+)?$/.test(g.ref)) {
+                  jumpToBlock(g.ref);
+                } else {
+                  jumpToTerm(g.ref);
+                }
+              });
+              gapsBox.appendChild(chip);
+            });
+          }
+
+          ta.addEventListener("input", function () {
+            lrec.answer = ta.value;
+            lrec.updated_at = new Date().toISOString();
+            if (lrec.status === "not_started" && ta.value.trim()) {
+              lrec.status = "in_progress";
+              applyStatus(layer, "in_progress");
+            }
+            refreshGaps();
+            markDirty();
+          });
+
+          applyStatus(layer, lrec.status);
+          refreshGaps();
+        });
+    });
+
+    if (targetSel) {
+      targetSel.addEventListener("change", function () {
+        targetDepth = clampDepth(parseInt(targetSel.value, 10));
+        if (String(targetDepth) !== targetSel.value) {
+          targetSel.value = String(targetDepth);
+        }
+        Object.keys(STORE).forEach(function (k) {
+          STORE[k].target_depth = targetDepth;
+        });
+        markDirty();
+      });
+    }
+
+    var saveBtn = document.getElementById("fe-save");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", function () {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(STORE));
+          markClean("已保存");
+        } catch (e) {
+          if (statusEl) { statusEl.textContent = "保存失败"; }
+        }
+      });
+    }
+
+    var exportBtn = document.getElementById("fe-export");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function () {
+        var now = new Date().toISOString();
+        var blocks = {};
+
+        Object.keys(STORE).forEach(function (sid) {
+          var rec = STORE[sid];
+          var card = wrap.querySelector('[data-subblock="' + sid + '"]');
+          if (!card) { return; }
+
+          var layers = [];
+          Array.prototype.forEach.call(
+            card.querySelectorAll(".feynman-layer"),
+            function (ly) {
+              var lvl = parseInt(ly.getAttribute("data-level"), 10);
+              var lrec = rec.layers[String(lvl)] || {};
+              var qEl = ly.querySelector(".feynman-q");
+              var rub = Array.prototype.map.call(
+                ly.querySelectorAll(".feynman-rubric li"),
+                function (li) { return li.textContent; }
+              ).join("\n");
+
+              layers.push({
+                level: lvl,
+                name: ly.getAttribute("data-name") || "",
+                question: (qEl ? qEl.textContent : "").trim(),
+                rubric: rub.trim(),
+                answer: lrec.answer || "",
+                feedback: "",
+                // MVP 没有单独的 feedback 输入框，缺口标记从作答内容里解析 [[b2-3]]
+                gaps: parseGaps(lrec.feedback || lrec.answer || ""),
+                status: lrec.status || "not_started",
+                updated_at: lrec.updated_at || now
+              });
+            });
+
+          layers.sort(function (a, b) { return a.level - b.level; });
+          blocks[sid] = {
+            article_id: ARTICLE_ID,
+            subblock_id: sid,
+            max_depth: MAX_DEPTH,
+            target_depth: clampDepth(rec.target_depth || targetDepth),
+            layers: layers,
+            exported_at: now
+          };
+        });
+
+        var payload = {
+          article_id: ARTICLE_ID,
+          exported_at: now,
+          blocks: blocks
+        };
+        var blob = new Blob([JSON.stringify(payload, null, 2)],
+                            { type: "application/json;charset=utf-8" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        // 文件名带本地时间戳，避免浏览器生成 "(1)" 重名
+        var d = new Date();
+        var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+        var stamp = "" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+                  + "T" + pad(d.getHours()) + pad(d.getMinutes());
+        a.download = "feynman_" + ARTICLE_ID + "_" + stamp + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+        if (statusEl) { statusEl.textContent = "已导出 JSON"; }
+      });
+    }
+
+    window.addEventListener("beforeunload", function (e) {
+      if (dirty) { e.preventDefault(); e.returnValue = ""; }
+    });
+
+    markClean("无修改");
+  })();
+
+  // ---- 6. Heti 自动间距（可选增强，失败不影响页面）
+  if (typeof Heti !== "undefined") {
+    try { new Heti(".heti").autoSpacing(); } catch (e) { /* noop */ }
+  }
+})();
+</script>
+</body>
+</html>
