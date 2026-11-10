@@ -133,7 +133,13 @@ p.sent.sent-last { margin-bottom: 1.5em; }
 ```css
 body[data-theme="1"] {
   --font-family: 'Hanyi Scholar', serif;
-  --theme-bg: linear-gradient(to bottom, #1e1e2f 0%, #11111b 100%);
+  /* 三层叠加：顶部冷光晕 + 底部暗影 + 基底渐变，制造纵深 */
+  --theme-bg:
+    radial-gradient(ellipse 75% 50% at 50% -10%,
+      rgba(130, 155, 235, 0.30) 0%, rgba(130, 155, 235, 0) 60%),
+    radial-gradient(ellipse 85% 65% at 50% 112%,
+      rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 70%),
+    linear-gradient(to bottom, #232338 0%, #0a0a12 100%);
   /* UI 主色（Tab、目录 hover、边框等）仍用冷色系 */
   --theme-color-1: #3BDFF6; --theme-color-2: #3BB1F6; --theme-color-3: #3B82F6;
   --theme-color-4: #3B53F6; --theme-color-5: #513BF6;

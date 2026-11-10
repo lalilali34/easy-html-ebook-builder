@@ -526,6 +526,61 @@ details.graph-subblock > summary code {
 .infer-rival .infer-kind,
 .infer-test .infer-kind { color: var(--term-c4, #a78bfa); opacity: 0.85; }
 
+/* AI 自我反思 */
+.self-reflect { border: 1px solid rgba(167, 139, 250, 0.28); }
+.reflect-text {
+  font-size: 22px !important;
+  line-height: 1.78 !important;
+  margin: 0;
+  opacity: 0.92;
+}
+
+/* 多维度自评面板 */
+.eval-panel {
+  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.028);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.eval-title {
+  font-size: 17px !important;
+  letter-spacing: 0.08em;
+  opacity: 0.45;
+  margin-bottom: 0.55rem;
+}
+.eval-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+.eval-row:last-child { margin-bottom: 0; }
+.eval-dim {
+  flex: 0 0 auto;
+  font-size: 19px !important;
+  opacity: 0.85;
+  min-width: 6.5em;
+}
+.eval-score {
+  flex: 0 0 auto;
+  font-size: 17px !important;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.9;
+}
+.eval-s4 { color: #34d399; }
+.eval-s3 { color: #3B82F6; }
+.eval-s2 { color: #F59E0B; }
+.eval-s1 { color: #ef4444; }
+.eval-note {
+  font-size: 18px !important;
+  opacity: 0.62;
+  line-height: 1.6 !important;
+}
+
 .confidence {
   display: inline-block;
   font-size: 19px !important;

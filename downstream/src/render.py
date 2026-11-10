@@ -664,6 +664,59 @@ def render_author_says(items):
     return "".join(out)
 
 
+# 评估维度中文名
+EVAL_DIMS = {
+    "textual_fidelity": "文本忠实度",
+    "conceptual_clarity": "概念辨析",
+    "historical_accuracy": "历史语境",
+    "dialectical_depth": "辩证深度",
+    "falsifiability": "可证伪性",
+    "ideological_stance": "立场预设",
+    "explanatory_power": "解释力",
+}
+
+SCORE_CLS = {"优秀": "s4", "良好": "s3", "一般": "s2", "存疑": "s1"}
+
+
+def render_evaluation(items):
+    """多维度自评面板（AI 自选维度，可能只有 2-4 条）。"""
+    if not items or not isinstance(items, list):
+        return ""
+    rows = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        dim = EVAL_DIMS.get(it.get("dim"), it.get("dim") or "")
+        score = (it.get("score") or "").strip()
+        note = (it.get("note") or "").strip()
+        if not dim or not score:
+            continue
+        cls = SCORE_CLS.get(score, "s2")
+        rows.append(
+            '<div class="eval-row">'
+            '<span class="eval-dim">%s</span>'
+            '<span class="eval-score %s">%s</span>'
+            '%s'
+            '</div>' % (esc(dim), cls, esc(score),
+                        ('<span class="eval-note">%s</span>' % esc(note)) if note else ""))
+    if not rows:
+        return ""
+    return ('<div class="eval-panel"><div class="eval-title">原文质量评估</div>%s</div>'
+            % "".join(rows))
+
+
+def render_self_reflection(text):
+    """AI 自我反思（可选）：和「我的疑问」同级的卡片。"""
+    if not text:
+        return ""
+    s = str(text).strip()
+    if not s:
+        return ""
+    return ('<div class="glass-card self-reflect">'
+            '<div class="card-label">\U0001FA9E AI 自我反思</div>'
+            '<p class="reflect-text">%s</p></div>' % esc(s))
+
+
 def render_subblock(b):
     bid = b.get("id", "")
     fn = b.get("function", "")
@@ -688,11 +741,17 @@ def render_subblock(b):
     out.append(render_my_inferences(b.get("my_inferences")))
     out.append(glass_card("\U0001F4A1 我的例子", b.get("my_examples")))
     out.append(glass_card("\u2753 我的疑问", b.get("my_questions")))
+    out.append(render_self_reflection(b.get("self_reflection")))
 
-    conf = b.get("confidence")
-    if conf:
-        out.append('<span class="confidence confidence-%s">置信度：%s</span>'
-                   % (attr(conf), esc(conf)))
+    # 底部：多维度自评；老数据没有 evaluation 时回退到 confidence
+    ev_html = render_evaluation(b.get("evaluation"))
+    if ev_html:
+        out.append(ev_html)
+    else:
+        conf = b.get("confidence")
+        if conf:
+            out.append('<span class="confidence confidence-%s">置信度：%s</span>'
+                       % (attr(conf), esc(conf)))
 
     out.append("</div></details>")
     return "".join(out)

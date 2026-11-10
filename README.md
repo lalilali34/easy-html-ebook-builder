@@ -126,7 +126,9 @@ ebook-pipeline/
 │   │   └── build_index.py      # ⑤ 书架聚合
 │   ├── templates/tab-shell.html# 三 Tab 外壳模板
 │   ├── themes.md               # 样式唯一来源（CSS 全在这里）
-│   └── assets/fonts/           # 字体目录（不含字体文件，需自行放置）
+│   └── assets/
+│       ├── fonts/              # 三款中文字体（本地，离线可用）
+│       └── heti/               # heti 排版资源（本地，去 CDN）
 │
 ├── corpus/                     # 【文章包】唯一交汇处
 │   └── <YYYYMMDD>_<slug>/
@@ -175,10 +177,13 @@ ebook-pipeline/
 
 ### 4.2 分析（pipeline.py）
 
-- pass1 骨架 → 逐大块 pass2 出子块 → pass3 关系 → pass4 逐块 → pass5 两阶段（author_says / my_\*）→ pass6 复述 → pass7 成文 → pass7s 例子 → pass8 术语 → pass9 费曼练习骨架（可选）
+- pass0 **ASR 纠错**（可选）→ pass1 骨架 → 逐大块 pass2 出子块 → pass3 关系 → pass4 逐块 → pass5 两阶段（author_says / **六层推论 + 自评**）→ pass6 复述 → pass7 成文 → pass7s 例子 → pass8 术语 → pass9 费曼练习骨架（可选）
+- **pass0 拆字幕**：入库时检测时间码（>30% 行以 `mm:ss` 开头）→ 剥离 + 按 150 字并段；写 `source/ingest.json` 的 `is_subtitle`，pipeline 据此自动决定跑不跑 ASR 纠错（拖拽入口零配置）
+- **pass0 纠错**：只自动应用 `confidence=high` 的修正，全部对照落 `analysis/asr_fixes.json`；修好的正文写 `source/raw.fixed.md`，原始 `raw.md` 永不覆盖
+- **pass5 分批**：每批 3 块调用（一次塞全部 blocks 时模型会返回扁平数组而丢掉 block_id 归属）
 - **超长分块**：超过 `--max-chars`（默认 **24000**）时，按段落均衡切块 → 每块压缩到 30–40% → 用压缩稿继续跑
 - **伪时间轴**：纯文本没有秒数，按段落序号生成等距时间轴（每段 10 秒）
-- 每轮原始响应落盘到 `analysis/pass.<tag>.json`，`--resume` 可复用（失败重跑不重烧 token）
+- 每轮原始响应落盘到 `analysis/pass.<tag>.json`，`--resume` 可复用（失败重跑不重烧 token）；pass9 的缓存会自校验"返回子块数"，不足时自动重跑该批
 - 模型返回结构会漂移（dict/list 互换），代码里有归一化层兜底
 
 ### 4.3 发布（publish.py）
@@ -188,10 +193,10 @@ ebook-pipeline/
 ```json
 {
   "schema_version": "1.0",
-  "article_id": "20261110_knowledge-why-forget",
+  "article_id": "20261109_xuanjian-xianzu",
   "status": "ready",
   "artifacts": [{ "kind": "analysis", "path": "...", "sha256": "..." }],
-  "stats": { "skeleton_blocks": 7, "subblocks": 29, "relations": 28 },
+  "stats": { "skeleton_blocks": 8, "subblocks": 18, "relations": 19 },
   "checks": { "analysis_schema": "pass", "terms_file": "pass" }
 }
 ```
@@ -207,6 +212,11 @@ ebook-pipeline/
   `feynman/<id>/<subblock_id>.json`（严格对齐规格字段）
 - 正文：句级分段（每句一个 `<p class="sent">`），段末句带 `sent-last`，用 CSS 区分句间距与段间距
 - 图谱：`skeleton.blocks[].subblock_ids` 显式父子结构 → 折叠卡片
+- **推论六层（v0.6）**：`my_inferences` 是 `{kind, claim}` 数组——`core` 1 条 + `forward` 2 条 + `backward` 2 条为必填，
+  `boundary` / `rival` / `test` 可选（AI 判断有没有真东西，没有就不写）；渲染按层分组带小标题
+- **原文质量评估**：块底部的 `evaluation` 评的是**作者**（七维度：文本忠实度 / 概念辨析 / 历史语境 /
+  辩证深度 / 可证伪性 / 立场预设 / 解释力），AI **自选适用维度**（通常 2–4 个），老数据回退显示 `confidence`
+- **AI 自我反思**：`self_reflection` 与「我的疑问」同级，只评 AI 自己的处理（引文完整性 / 是否越界补充）
 - 术语：本篇 `<id>.md` 内最长匹配，渐变下划线，**JS 浮层**（不是 CSS 伪元素）
 - **双浮层（v0.6）**：系统层（冷色蓝边）+ 个人层（暖色橙边）。个人笔记来自 `personal_terms/<id>.md`；
   两层区间完全重合时合并为一个 span 双属性（`data-tooltip` + `data-personal`），
@@ -215,7 +225,9 @@ ebook-pipeline/
 - **笔记编辑（浏览器内）**：浮层右上角 `✏️` → 编辑 → 确定（先进内存暂存）→ 右下角「保存笔记」统一写入 localStorage；
   存在未保存修改时关闭页面会被 `beforeunload` 拦截提醒；「导出 md」下载后手动放回 `personal_terms/` 即固化
 - 排版：侧边目录（右侧，sticky）、渐变进度条、小标题 42px + 序号、书名 55px
-- **幂等**：inputs 指纹包含 deliver / renderer 自身 / analysis / article / terms / **personal_terms** / themes / template
+- **完全离线**：字体与 heti 都是本地资源（`downstream/assets/fonts/`、`downstream/assets/heti/`），零外网依赖；
+  路径由 `render.py` 按输出目录动态计算相对路径
+- **幂等**：inputs 指纹包含 deliver / renderer 自身 / analysis / article / terms / **personal_terms** / **feynman** / themes / template
 
 ### 4.5 书架（build_index.py）
 
@@ -239,6 +251,17 @@ ebook-pipeline/
 | P4 | `recap.three_questions` 不设上限，语义要求数量 == 子块数 |
 | P5 | 顶层 `schema_version: "1.0"` |
 | P6 | `enums.json` 与 schema 内联枚举必须一致（防漂移） |
+
+**block 层的我的层次字段（v0.6 扩展）**：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `my_inferences` | `[{kind, claim}]` 或 `[string]` | 六层推论。`kind` ∈ core / forward / backward / boundary / rival / test；旧数据为字符串数组，`anyOf` 兼容 |
+| `my_examples` | `[string]` | 每条挂靠一条 `forward`，写法「（对应正向外延①）……」 |
+| `my_questions` | `[string]` | 每条挂靠一条 `backward`/`boundary` |
+| `self_reflection` | `string`（可选） | AI 对自己这块分析的反思，只评自己、不重复 `evaluation` |
+| `evaluation` | `[{dim, score, note}]`（可选） | **评原文/作者**的七维度自评，AI 自选适用维度（通常 2–4 个） |
+| `confidence` | `string` | 旧字段，无 `evaluation` 时渲染回退用它 |
 
 严格校验：
 
@@ -353,6 +376,14 @@ python tools\import_feynman.py "feynman_<id>.json"
 
 # 断点续跑（某轮失败后）
 python upstream\src\pipeline.py --id <id> --resume
+
+# 老文章 ASR 错字修补（raw.md 已丢失时，直接改 analysis.json 的引文）
+python tools\fix_analysis_quotes.py <id> --dry-run   # 只看能发现什么
+python tools\fix_analysis_quotes.py <id> --apply     # 写回 + 重新发布渲染
+
+# ASR 纠错开关（默认按入库标记自动判断）
+python upstream\src\full_auto.py --file x.md --asr-fix      # 强制跑
+python upstream\src\full_auto.py --file x.md --no-asr-fix   # 强制跳过
 ```
 
 ---
@@ -417,6 +448,10 @@ Copy-Item dist\ebook-pipeline.exe . -Force
 | 2026-11-09 | v0.6 线1：双术语浮层（系统层 + `personal_terms/` 个人层）、hide 抑制、术语 Tab 笔记区；pass8 增加学派归属与拆行规则 |
 | 2026-11-09 | v0.6 线2 阶段A：pass9 费曼骨架（5 层 rubric）、`--feynman-depth`、第四 Tab 只读展示、`rerun_feynman.py` 迭代工具 |
 | 2026-11-09 | v0.6 线2 阶段B：练习作答框 + 三态标记 + localStorage + 未保存拦截 + 导出 JSON，`import_feynman.py` 拆分入库 |
+| 2026-11-10 | v0.6 线2C：缺口回链（`[[b2-3]]` 跳块、`[[术语]]` 唤起浮层）、自评清单折叠、导出文件名带时间戳 |
+| 2026-11-10 | v0.6 收尾：主题拆三层色板（底/术语/例子）、术语 WangTianxi 1.3em、pass0 ASR 纠错、字幕时间码剥离 |
+| 2026-11-10 | v0.6 增强：pass5 推论六层（核心+正反外延必填）、原文质量评估（七维度 AI 自选）、AI 自我反思 |
+| 2026-11-10 | v0.6 增强：heti 本地化（去 CDN）、`fix_analysis_quotes.py` 修补老文章错字、图谱字号放大、背景三层叠加 |
 
 ---
 

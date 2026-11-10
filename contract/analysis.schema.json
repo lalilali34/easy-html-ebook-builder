@@ -152,6 +152,38 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "self_reflection": {
+          "type": "string",
+          "description": "AI 对自己这块分析的反思（可选）：哪里逻辑自洽、哪里需要补证。"
+        },
+        "evaluation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["dim", "score"],
+            "properties": {
+              "dim": {
+                "type": "string",
+                "enum": [
+                  "textual_fidelity",
+                  "conceptual_clarity",
+                  "historical_accuracy",
+                  "dialectical_depth",
+                  "falsifiability",
+                  "ideological_stance",
+                  "explanatory_power"
+                ]
+              },
+              "score": {
+                "type": "string",
+                "enum": ["优秀", "良好", "一般", "存疑"]
+              },
+              "note": { "type": "string" }
+            }
+          },
+          "description": "多维度自评。AI 只输出与本文相关的维度，不相关的不写。"
+        },
         "confidence": { "$ref": "#/definitions/confidence" }
       }
     },
